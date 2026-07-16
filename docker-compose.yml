@@ -11,7 +11,6 @@ x-backend-env: &backend-env
   REDIS_URL: redis://redis:6379/0
   STORAGE_DIR: /data/images
   DETECT_CONF: "0.4"
-  # WEIGHTS_PATH: /models/best.pt   # <- set once Stage-1 weights exist (real model)
   DETECTOR_VERSION: stub-0
 
 services:
@@ -55,11 +54,16 @@ services:
         condition: service_healthy
 
   worker:
-    build: ./backend
-    command: celery -A app.celery_app:celery_app worker --loglevel=info
-    environment: *backend-env
+    build:
+      context: .                       # repo root — needs to reach ai-pipeline/ too
+      dockerfile: backend/Dockerfile.worker
+    environment:
+      <<: *backend-env
+      WEIGHTS_PATH: /models/best.pt    # real Stage-1 GTSDB model (docs/02 §3)
+      DETECTOR_VERSION: gtsdb-mvp-v1
     volumes:
-      - images:/data/images        # reads the same images the api wrote
+      - images:/data/images            # reads the same images the api wrote
+      - ./backend/models:/models:ro    # best.pt lives here (gitignored, not baked into image)
     depends_on:
       db:
         condition: service_healthy

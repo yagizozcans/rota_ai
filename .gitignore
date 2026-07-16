@@ -18,5 +18,9 @@ venv/
 .vscode/
 .idea/
 
-# ai-pipeline/ and backend/ have their own more specific .gitignore files
-# (data/, runs/, reports/, *.pt, docker volumes, etc.)
+# Model weights — never commit (large binaries; download/train instead, see backend/README.md)
+*.pt
+backend/models/*
+!backend/models/.gitkeep
+
+# ai-pipeline/ has its own more specific .gitignore too (data/, runs/, reports/, etc.)

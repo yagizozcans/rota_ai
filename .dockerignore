@@ -1,0 +1,16 @@
+# Repo-root build context (used by the worker image — see docker-compose.yml)
+.git/
+docs/
+._*
+.DS_Store
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+
+# Large / local-only — never bake into an image
+ai-pipeline/data/
+ai-pipeline/runs/
+ai-pipeline/reports/
+ai-pipeline/*.pt
+backend/models/       # mounted as a volume at runtime instead, see docker-compose.yml

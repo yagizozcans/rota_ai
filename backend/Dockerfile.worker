@@ -1,0 +1,28 @@
+# Celery worker image — the ONLY image that touches the model (docs/02 ↔ app/ml.py).
+# Built with context = repo root (see docker-compose.yml) so it can reach ai-pipeline/.
+# The api image (backend/Dockerfile) stays lightweight and never installs ultralytics.
+FROM python:3.11-slim
+
+# libpq5: psycopg2. libgl1/libglib2.0-0: opencv (an ultralytics dependency) needs these
+# even for headless inference, or it fails with "libGL.so.1: cannot open shared object".
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpq5 libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY backend/pyproject.toml ./backend/pyproject.toml
+RUN pip install --no-cache-dir \
+        "fastapi>=0.115" "uvicorn[standard]>=0.30" "python-multipart>=0.0.9" \
+        "celery>=5.4" "redis>=5.0" "sqlalchemy>=2.0" "geoalchemy2>=0.15" \
+        "psycopg2-binary>=2.9" "pydantic>=2.7" "pydantic-settings>=2.3"
+
+# The model seam: install ai-pipeline as a package so `from rotaai_ai.detect import ...`
+# (app/ml.py) resolves. This pulls in ultralytics + torch automatically.
+COPY ai-pipeline/pyproject.toml /app/ai-pipeline/pyproject.toml
+COPY ai-pipeline/src /app/ai-pipeline/src
+RUN pip install --no-cache-dir -e /app/ai-pipeline
+
+COPY backend/app ./app
+
+CMD ["celery", "-A", "app.celery_app:celery_app", "worker", "--loglevel=info"]
