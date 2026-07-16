@@ -1,0 +1,28 @@
+# STAGE 2 — Fine-tune dataset (real KGM taxonomy).
+# docs/02-ai-pipeline.md §3 "Faz 1". ~25 classes, ~150-300 examples/class,
+# labeled from Turkish field capture + KGM El Kitabı (+ synthetic 2D-sign paste
+# using GTSRB-style crops onto road backgrounds).
+#
+# Train stage 2 by loading the Stage-1 weights as the base:
+#   python scripts/train.py --data configs/data_finetune.yaml \
+#       --model runs/pretrain_signness/weights/best.pt --name rotaai_kgm_v1
+#
+# Fill `names` with the real KGM classes as labeling proceeds. Placeholder set
+# below mirrors the taxonomy families in src/rotaai_ai/taxonomy.py — replace the
+# sign_* entries with concrete KGM codes (e.g. sign_T1 tehlikeli viraj, ...).
+
+path: ../data/kgm
+train: images/train
+val: images/val
+
+names:
+  0: sign_warning
+  1: sign_prohibitory
+  2: sign_mandatory
+  3: sign_information
+  4: barrier
+  5: guardrail
+  6: light_pole
+  7: road_marking
+  8: traffic_signal
+  # ... expand toward ~25 concrete KGM sign codes for Phase 1

@@ -1,0 +1,20 @@
+[project]
+name = "rotaai-ai"
+version = "0.1.0"
+description = "RotaAI road-asset detection pipeline (Layer 02) — see docs/02-ai-pipeline.md"
+requires-python = ">=3.10"
+dependencies = [
+    "ultralytics>=8.3.0",   # provides YOLO26; auto-installs a matching torch
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Only needed if you download datasets from Roboflow Universe.
+roboflow = ["roboflow>=1.1.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

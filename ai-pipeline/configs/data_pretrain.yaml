@@ -1,0 +1,16 @@
+# STAGE 1 — Pre-training dataset (generic sign-ness).
+# docs/02-ai-pipeline.md §3 "Faz 0". Strategy: TT-100K + GTSDB collapsed to ONE
+# generic class so the model learns "what a sign is / how it sits in a scene",
+# independent of the (incompatible) per-dataset taxonomies.
+#
+# GTSRB is NOT here — it is classification-only (no scene boxes); it feeds the
+# synthetic-augmentation step in Stage 2 instead.
+#
+# Build data/pretrain with: python scripts/convert_datasets.py merge ...
+
+path: ../data/pretrain
+train: images/train
+val: images/val
+
+names:
+  0: traffic_sign

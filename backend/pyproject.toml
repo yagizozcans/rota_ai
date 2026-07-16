@@ -1,0 +1,26 @@
+[project]
+name = "rotaai-backend"
+version = "0.1.0"
+description = "RotaAI Backend API + Celery worker (Layer 03) — see docs/03-backend-api.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",   # multipart frame uploads
+    "celery>=5.4",
+    "redis>=5.0",
+    "sqlalchemy>=2.0",
+    "geoalchemy2>=0.15",
+    "psycopg2-binary>=2.9",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+]
+
+# The real model is optional — the worker stubs detections until these are present
+# (and WEIGHTS_PATH is set). Install with: pip install -e '.[ml]' plus the
+# ai-pipeline package (pip install -e ../ai-pipeline).
+[project.optional-dependencies]
+ml = ["ultralytics>=8.3.0"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]

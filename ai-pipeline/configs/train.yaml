@@ -1,0 +1,23 @@
+# Training hyperparameters (docs/02-ai-pipeline.md §3, §5).
+# Consumed by scripts/train.py. Ultralytics auto-downloads the base weights.
+
+model: yolo26s.pt          # target model; fallback yolo11s.pt (config.MODEL_FALLBACKS)
+epochs: 100
+imgsz: 640
+batch: 16                  # tune to GPU memory (Colab T4 ~16, RunPod A100 higher)
+patience: 20               # early-stop patience
+
+# device: set at run time. "0" = first CUDA GPU (Colab/RunPod), "mps" = Apple
+# Silicon (local smoke test only), "cpu" = fallback. Left null -> auto-detect.
+device: null
+
+# Small-object friendly defaults — distant signs are small (YOLO26 ProgLoss/STAL
+# help here per docs/02 §2). Mild augmentation to start.
+mosaic: 1.0
+close_mosaic: 10
+lr0: 0.01
+
+# Output bookkeeping
+project: runs               # results go to ai-pipeline/runs/<name>
+name: rotaai_signs_v0
+model_version: v0.1-bootstrap-yolo26s   # stamped onto every Detection

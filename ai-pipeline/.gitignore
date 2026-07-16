@@ -1,0 +1,14 @@
+# Data & model artifacts — never commit (large, and may contain KVKK-sensitive imagery)
+data/*
+!data/.gitkeep
+runs/
+reports/
+*.pt
+*.onnx
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.ipynb_checkpoints/

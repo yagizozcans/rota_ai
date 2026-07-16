@@ -1,0 +1,22 @@
+# macOS cruft (this repo lives on a non-APFS external drive that generates these constantly)
+._*
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+
+# Secrets — never commit real env files, only the .example ones
+.env
+*.env
+!*.env.example
+
+# Editors
+.vscode/
+.idea/
+
+# ai-pipeline/ and backend/ have their own more specific .gitignore files
+# (data/, runs/, reports/, *.pt, docker volumes, etc.)

@@ -1,0 +1,23 @@
+# Dataset config (Ultralytics YOLO format) — single source of truth for classes.
+# docs/02-ai-pipeline.md §3, docs/00-overview.md §4.4
+#
+# Phase 0 uses a PUBLIC real-street traffic-sign detection dataset to validate the
+# full train -> test -> metrics loop. Swap in the Turkish/KGM dataset later by
+# editing ONLY this file (paths + names); no code changes needed.
+#
+# `path` is the dataset root; train/val are image folders relative to it.
+# Each image has a sibling YOLO .txt label (class_id cx cy w h, normalized).
+
+path: ../data/bootstrap        # dataset root (gitignored)
+train: images/train
+val: images/val
+# test: images/test            # optional held-out split
+
+# Class names. Index order MUST match the label class_ids in the .txt files.
+# NOTE: these are the bootstrap dataset's classes. For the Turkish model these
+# become the KGM sign_* taxonomy (see src/rotaai_ai/taxonomy.py).
+names:
+  0: sign_prohibitory
+  1: sign_mandatory
+  2: sign_warning
+  3: sign_information
