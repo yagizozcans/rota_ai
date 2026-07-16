@@ -51,7 +51,10 @@ def main() -> None:
         project=train_cfg.get("project", "runs"),
         name=args.name,
     )
-    print("[train] done. Best weights: runs/%s/weights/best.pt" % args.name)
+    # Ask the trainer for the REAL save dir instead of guessing — Ultralytics'
+    # path resolution can nest an extra task subfolder depending on version.
+    best = model.trainer.save_dir / "weights" / "best.pt"
+    print(f"[train] done. Best weights: {best}")
 
 
 if __name__ == "__main__":
