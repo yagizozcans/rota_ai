@@ -21,7 +21,12 @@ function filenameOf(item: InventoryItem): string {
   return parts[parts.length - 1]
 }
 
-export function ArchivePanel() {
+interface ArchivePanelProps {
+  /** Bump this (e.g. after every approve/reject/correct) to trigger a refetch. */
+  refreshKey?: number
+}
+
+export function ArchivePanel({ refreshKey }: ArchivePanelProps) {
   const [items, setItems] = useState<Record<string, InventoryItem[]>>({})
   const [open, setOpen] = useState<Record<string, boolean>>({ approved: true })
   const [selected, setSelected] = useState<InventoryItem | null>(null)
@@ -46,7 +51,9 @@ export function ArchivePanel() {
 
   useEffect(() => {
     load()
-  }, [load])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshKey is a pure
+    // "refetch now" trigger from the parent, not data this effect reads itself.
+  }, [load, refreshKey])
 
   return (
     <div className="w-80 shrink-0 flex flex-col gap-3 min-h-0">

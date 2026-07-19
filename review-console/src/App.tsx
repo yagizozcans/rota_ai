@@ -25,6 +25,10 @@ export default function App() {
   const [correctClass, setCorrectClass] = useState('')
   const [correctSeverity, setCorrectSeverity] = useState<Severity>('medium')
 
+  // Bumped after every decision so ArchivePanel knows to refetch — it has no
+  // other way to learn that an approve/reject/correct just changed its data.
+  const [archiveVersion, setArchiveVersion] = useState(0)
+
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -62,6 +66,7 @@ export default function App() {
       await submitDecision(current.item_id, { decision: 'approved' })
       setApprovedToday((n) => n + 1)
       removeCurrentFromQueue(current.item_id)
+      setArchiveVersion((v) => v + 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -75,6 +80,7 @@ export default function App() {
     try {
       await submitDecision(current.item_id, { decision: 'rejected' })
       removeCurrentFromQueue(current.item_id)
+      setArchiveVersion((v) => v + 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -103,6 +109,7 @@ export default function App() {
       })
       setCorrecting(false)
       removeCurrentFromQueue(current.item_id)
+      setArchiveVersion((v) => v + 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -175,7 +182,7 @@ export default function App() {
 
       <div className="flex-1 flex gap-4 min-h-0">
         {/* Left sidebar — browse already-reviewed items without loading images (folder-tree + JSON) */}
-        <ArchivePanel />
+        <ArchivePanel refreshKey={archiveVersion} />
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-neutral-500">Yükleniyor…</div>
