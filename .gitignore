@@ -24,3 +24,9 @@ backend/models/*
 !backend/models/.gitkeep
 
 # ai-pipeline/ has its own more specific .gitignore too (data/, runs/, reports/, etc.)
+
+# Node (review-console)
+node_modules/
+dist/
+dist-ssr/
+*.local
