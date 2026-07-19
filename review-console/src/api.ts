@@ -25,6 +25,26 @@ export interface ReviewDecisionPayload {
   severity?: Severity
 }
 
+// Full item detail for the archive panel — GET /api/v1/inventory?status=...
+// Superset of ReviewQueueItem: adds ids/timestamps once an item leaves the queue.
+export interface InventoryItem {
+  item_id: string
+  detection_id: string
+  class: string
+  type: string
+  severity: Severity | null
+  confidence: number | null
+  bbox: [number, number, number, number] | null
+  model_version: string | null
+  image_ref: string | null
+  lat: number | null
+  lon: number | null
+  review_status: string
+  reviewer_id: string | null
+  reviewed_at: string | null
+  created_at: string | null
+}
+
 async function asJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
     throw new Error(`${res.status} ${res.statusText}: ${await res.text().catch(() => '')}`)
@@ -52,4 +72,9 @@ export function submitDecision(itemId: string, payload: ReviewDecisionPayload): 
 
 export function imageUrl(imageRef: string): string {
   return `${API_BASE}/media/${imageRef}`
+}
+
+export function fetchInventory(status: string): Promise<InventoryItem[]> {
+  const params = new URLSearchParams({ status, limit: '200' })
+  return fetch(`${API_BASE}/api/v1/inventory?${params}`).then(asJson<InventoryItem[]>)
 }

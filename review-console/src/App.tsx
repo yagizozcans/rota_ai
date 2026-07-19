@@ -10,6 +10,7 @@ import {
 import { BBoxImage } from './components/BBoxImage'
 import { MapPreview } from './components/MapPreview'
 import { CorrectPanel } from './components/CorrectPanel'
+import { ArchivePanel } from './components/ArchivePanel'
 
 export default function App() {
   const [queue, setQueue] = useState<ReviewQueueItem[]>([])
@@ -172,108 +173,113 @@ export default function App() {
         </div>
       )}
 
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center text-neutral-500">Yükleniyor…</div>
-      ) : !current ? (
-        <div className="flex-1 flex items-center justify-center text-neutral-500 text-lg">
-          Kuyruk boş — tüm tespitler incelendi 🎉
-        </div>
-      ) : (
-        <div className="flex-1 grid grid-cols-3 gap-4 min-h-0">
-          {/* Image + bbox — takes most of the screen (docs/05 §5: tek ekranda karar) */}
-          <div className="col-span-2 relative min-h-0">
-            <BBoxImage
-              src={current.image_ref ? imageUrl(current.image_ref) : ''}
-              bbox={current.bbox}
-              label={`${current.class} ${current.confidence != null ? Math.round(current.confidence * 100) + '%' : ''}`}
-            />
-            {correcting && (
-              <CorrectPanel
-                taxonomy={taxonomy}
-                selectedClass={correctClass}
-                severity={correctSeverity}
-                onClassChange={setCorrectClass}
-                onSeverityChange={setCorrectSeverity}
-                onConfirm={confirmCorrect}
-                onCancel={() => setCorrecting(false)}
+      <div className="flex-1 flex gap-4 min-h-0">
+        {/* Left sidebar — browse already-reviewed items without loading images (folder-tree + JSON) */}
+        <ArchivePanel />
+
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center text-neutral-500">Yükleniyor…</div>
+        ) : !current ? (
+          <div className="flex-1 flex items-center justify-center text-neutral-500 text-lg">
+            Kuyruk boş — tüm tespitler incelendi 🎉
+          </div>
+        ) : (
+          <div className="flex-1 grid grid-cols-3 gap-4 min-h-0">
+            {/* Image + bbox — takes most of the screen (docs/05 §5: tek ekranda karar) */}
+            <div className="col-span-2 relative min-h-0">
+              <BBoxImage
+                src={current.image_ref ? imageUrl(current.image_ref) : ''}
+                bbox={current.bbox}
+                label={`${current.class} ${current.confidence != null ? Math.round(current.confidence * 100) + '%' : ''}`}
               />
-            )}
-          </div>
-
-          {/* Right column: map + info + actions */}
-          <div className="flex flex-col gap-4 min-h-0">
-            <div className="h-56 shrink-0">
-              <MapPreview lat={current.lat} lon={current.lon} />
+              {correcting && (
+                <CorrectPanel
+                  taxonomy={taxonomy}
+                  selectedClass={correctClass}
+                  severity={correctSeverity}
+                  onClassChange={setCorrectClass}
+                  onSeverityChange={setCorrectSeverity}
+                  onConfirm={confirmCorrect}
+                  onCancel={() => setCorrecting(false)}
+                />
+              )}
             </div>
 
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 text-sm space-y-1">
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Sınıf</span>
-                <span className="text-neutral-200 font-medium">{current.class}</span>
+            {/* Right column: map + info + actions */}
+            <div className="flex flex-col gap-4 min-h-0">
+              <div className="h-56 shrink-0">
+                <MapPreview lat={current.lat} lon={current.lon} />
               </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Güven</span>
-                <span className="text-neutral-200">
-                  {current.confidence != null ? `${Math.round(current.confidence * 100)}%` : '—'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Tip</span>
-                <span className="text-neutral-200">{current.type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Konum</span>
-                <span className="text-neutral-200">
-                  {current.lat?.toFixed(4)}, {current.lon?.toFixed(4)}
-                </span>
-              </div>
-              <div className="flex justify-between text-neutral-600 text-xs pt-1">
-                <span>{index + 1} / {queue.length}</span>
-              </div>
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={approve}
-                disabled={busy}
-                className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-medium rounded-lg py-2.5 text-sm transition-colors"
-              >
-                ✓ Onayla <span className="opacity-60">(A)</span>
-              </button>
-              <button
-                onClick={reject}
-                disabled={busy}
-                className="bg-red-500 hover:bg-red-400 disabled:opacity-50 text-black font-medium rounded-lg py-2.5 text-sm transition-colors"
-              >
-                ✕ Reddet <span className="opacity-60">(R)</span>
-              </button>
-              <button
-                onClick={openCorrect}
-                disabled={busy}
-                className="bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 rounded-lg py-2.5 text-sm transition-colors"
-              >
-                ✎ Düzelt <span className="opacity-60">(C)</span>
-              </button>
-              <div className="flex gap-2">
+              <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Sınıf</span>
+                  <span className="text-neutral-200 font-medium">{current.class}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Güven</span>
+                  <span className="text-neutral-200">
+                    {current.confidence != null ? `${Math.round(current.confidence * 100)}%` : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Tip</span>
+                  <span className="text-neutral-200">{current.type}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Konum</span>
+                  <span className="text-neutral-200">
+                    {current.lat?.toFixed(4)}, {current.lon?.toFixed(4)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-neutral-600 text-xs pt-1">
+                  <span>{index + 1} / {queue.length}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
                 <button
-                  onClick={goPrev}
-                  disabled={index === 0}
-                  className="flex-1 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-30 rounded-lg py-2 text-xs transition-colors"
+                  onClick={approve}
+                  disabled={busy}
+                  className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-medium rounded-lg py-2.5 text-sm transition-colors"
                 >
-                  ← Önceki
+                  ✓ Onayla <span className="opacity-60">(A)</span>
                 </button>
                 <button
-                  onClick={goNext}
-                  disabled={index >= queue.length - 1}
-                  className="flex-1 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-30 rounded-lg py-2 text-xs transition-colors"
+                  onClick={reject}
+                  disabled={busy}
+                  className="bg-red-500 hover:bg-red-400 disabled:opacity-50 text-black font-medium rounded-lg py-2.5 text-sm transition-colors"
                 >
-                  Sonraki →
+                  ✕ Reddet <span className="opacity-60">(R)</span>
                 </button>
+                <button
+                  onClick={openCorrect}
+                  disabled={busy}
+                  className="bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 rounded-lg py-2.5 text-sm transition-colors"
+                >
+                  ✎ Düzelt <span className="opacity-60">(C)</span>
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={goPrev}
+                    disabled={index === 0}
+                    className="flex-1 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-30 rounded-lg py-2 text-xs transition-colors"
+                  >
+                    ← Önceki
+                  </button>
+                  <button
+                    onClick={goNext}
+                    disabled={index >= queue.length - 1}
+                    className="flex-1 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-30 rounded-lg py-2 text-xs transition-colors"
+                  >
+                    Sonraki →
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
