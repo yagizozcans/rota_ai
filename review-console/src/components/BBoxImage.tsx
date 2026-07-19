@@ -19,18 +19,27 @@ interface BBoxImageProps {
  */
 export function BBoxImage({ src, bbox, label }: BBoxImageProps) {
   const imgRef = useRef<HTMLImageElement>(null)
-  const [scale, setScale] = useState<{ x: number; y: number } | null>(null)
+  const [geom, setGeom] = useState<{ x: number; y: number; offsetX: number; offsetY: number } | null>(
+    null,
+  )
 
   useEffect(() => {
     const img = imgRef.current
     if (!img) return
-    setScale(null) // reset while the new src loads to avoid showing a stale box
+    setGeom(null) // reset while the new src loads to avoid showing a stale box
 
     function recompute() {
       if (!img || !img.naturalWidth || !img.clientWidth || !img.clientHeight) return
-      setScale({
+      // img is centered (object-contain in a flex box) inside a possibly larger
+      // container, so its rendered top-left can sit away from (0,0) of the
+      // relative parent. offsetLeft/offsetTop capture exactly that gap — without
+      // it, the overlay drifts whenever the image doesn't fill the container on
+      // one axis (this was the bug: box position ignored the centering offset).
+      setGeom({
         x: img.clientWidth / img.naturalWidth,
         y: img.clientHeight / img.naturalHeight,
+        offsetX: img.offsetLeft,
+        offsetY: img.offsetTop,
       })
     }
 
@@ -54,14 +63,14 @@ export function BBoxImage({ src, bbox, label }: BBoxImageProps) {
         className="max-w-full max-h-full object-contain select-none"
         draggable={false}
       />
-      {bbox && scale && (
+      {bbox && geom && (
         <div
           className="absolute border-2 border-amber-400 rounded-sm shadow-[0_0_0_1px_rgba(0,0,0,0.6)] pointer-events-none"
           style={{
-            left: bbox[0] * scale.x,
-            top: bbox[1] * scale.y,
-            width: bbox[2] * scale.x,
-            height: bbox[3] * scale.y,
+            left: geom.offsetX + bbox[0] * geom.x,
+            top: geom.offsetY + bbox[1] * geom.y,
+            width: bbox[2] * geom.x,
+            height: bbox[3] * geom.y,
           }}
         >
           {label && (
