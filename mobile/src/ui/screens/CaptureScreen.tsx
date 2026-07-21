@@ -1,35 +1,57 @@
+import { useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Camera, useCameraDevice } from 'react-native-vision-camera';
+import { HudOverlay } from '../hud/HudOverlay';
+import { ControlStack } from '../controls/ControlStack';
+import { useCaptureEngine } from '../capture/useCaptureEngine';
+import { useCaptureStore } from '../state/captureStore';
+import { DEV_IDENTITY } from '../state/session';
+import { frameStoreDir } from '../../storage/files';
 import { theme } from '../theme';
 
 /**
- * Capture screen shell (Slice 1). The live camera, HUD overlay (§3.6) and the
- * right-side control stack (§3.7) are filled in by later slices — this is the
- * landscape-locked dark canvas they render into.
+ * Landscape capture screen: full-bleed live camera with the HUD overlay (§3.6)
+ * and the right-side control stack (§3.7) on top. Record toggles the auto
+ * distance-capture; Foto takes a manual frame.
  */
 export function CaptureScreen() {
+  const device = useCameraDevice('back');
+  const cameraRef = useRef<Camera>(null);
+  const recording = useCaptureStore((s) => s.recording);
+  const { start, stop, captureManual } = useCaptureEngine(cameraRef, DEV_IDENTITY);
+
+  const onToggleRecord = () => {
+    if (recording) {
+      stop();
+    } else {
+      start();
+    }
+  };
+
+  if (!device) {
+    return (
+      <View style={styles.fallback}>
+        <Text style={styles.fallbackText}>Kamera bulunamadı</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>RotaAI — Çekim</Text>
-      <Text style={styles.subtitle}>İskele hazır · yatay kilitli</Text>
+      <Camera ref={cameraRef} style={StyleSheet.absoluteFill} device={device} isActive photo />
+      <HudOverlay framePath={frameStoreDir()} />
+      <ControlStack recording={recording} onToggleRecord={onToggleRecord} onPhoto={captureManual} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  root: { flex: 1, backgroundColor: theme.bg },
+  fallback: {
     flex: 1,
     backgroundColor: theme.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
-    color: theme.textPrimary,
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  subtitle: {
-    color: theme.textFaint,
-    fontSize: 13,
-    marginTop: 6,
-  },
+  fallbackText: { color: theme.textPrimary, fontSize: 16 },
 });

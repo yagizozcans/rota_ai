@@ -9,6 +9,11 @@ import RNFS from 'react-native-fs';
 
 const FRAME_DIR = `${RNFS.DocumentDirectoryPath}/frames`;
 
+/** Where captured JPEGs are stored on device (shown in the HUD path tag, 01 §3.6). */
+export function frameStoreDir(): string {
+  return FRAME_DIR;
+}
+
 /** Path RNFS expects (no file:// scheme). */
 function toFsPath(path: string): string {
   return path.startsWith('file://') ? path.replace('file://', '') : path;

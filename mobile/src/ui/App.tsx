@@ -1,18 +1,24 @@
 import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { CaptureScreen } from './screens/CaptureScreen';
+import { PermissionGate } from './screens/PermissionGate';
+import { usePermissions } from './permissions/usePermissions';
 
 /**
- * Root component. The app is a single-screen instrument panel — no router is
- * pulled in (the only navigation is the permission gate → capture, handled as
- * state in a later slice, not as routes). Landscape is enforced natively in
- * AndroidManifest (android:screenOrientation="sensorLandscape").
+ * Root component. Single-screen instrument panel — no router; the only
+ * navigation is the permission gate → capture screen, handled as state.
+ * Landscape is enforced natively (AndroidManifest sensorLandscape).
  */
 function App() {
+  const { status, request } = usePermissions();
   return (
     <SafeAreaProvider>
       <StatusBar hidden />
-      <CaptureScreen />
+      {status === 'granted' ? (
+        <CaptureScreen />
+      ) : (
+        <PermissionGate status={status} onRetry={request} />
+      )}
     </SafeAreaProvider>
   );
 }
