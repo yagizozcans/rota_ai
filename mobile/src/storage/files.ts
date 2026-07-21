@@ -29,3 +29,17 @@ export async function persistPhoto(tempPath: string, frameId: string): Promise<s
   await RNFS.moveFile(toFsPath(tempPath), dest);
   return dest;
 }
+
+/** Whether a stored frame file still exists (used to detect already-uploaded orphans). */
+export function fileExists(path: string): Promise<boolean> {
+  return RNFS.exists(toFsPath(path));
+}
+
+/** Delete a stored frame after its upload is confirmed (01 §3.3). Idempotent. */
+export async function deleteFile(path: string): Promise<void> {
+  try {
+    await RNFS.unlink(toFsPath(path));
+  } catch {
+    // Already gone — nothing to do.
+  }
+}

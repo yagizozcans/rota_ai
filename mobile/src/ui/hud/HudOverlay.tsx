@@ -1,6 +1,7 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { config } from '../../config';
 import { useCaptureStore } from '../state/captureStore';
+import { useSyncStore } from '../state/syncStore';
 import { theme } from '../theme';
 import { estimateRemainingMinutes } from './hudCompute';
 import { GpsAccuracy } from './GpsAccuracy';
@@ -21,6 +22,8 @@ export function HudOverlay({ framePath }: { framePath: string }) {
   const fix = useCaptureStore((s) => s.fix);
   const freeBytes = useCaptureStore((s) => s.freeBytes);
   const framesPerMinute = useCaptureStore((s) => s.framesPerMinute());
+  const capturedCount = useCaptureStore((s) => s.capturedCount);
+  const uploadedCount = useSyncStore((s) => s.uploadedCount);
 
   // Seeded average frame size until per-frame measurement lands (Slice 5+).
   const avgFrameBytes = config.AVG_FRAME_SIZE_SEED_KB * 1024;
@@ -45,6 +48,12 @@ export function HudOverlay({ framePath }: { framePath: string }) {
         </View>
       )}
 
+      <View style={[styles.chip, styles.bottomRight]}>
+        <Text style={styles.counts}>
+          {capturedCount} çekildi · {uploadedCount} yüklendi
+        </Text>
+      </View>
+
       <View style={[styles.chip, styles.bottomLeft]}>
         <FilePathTag path={framePath} />
       </View>
@@ -64,4 +73,6 @@ const styles = StyleSheet.create({
   topLeft: { top: 12, left: 12, gap: 6 },
   topRight: { top: 12, right: 12 },
   bottomLeft: { bottom: 12, left: 12, maxWidth: '55%' },
+  bottomRight: { bottom: 12, right: 12 },
+  counts: { color: theme.textPrimary, fontSize: 13, fontWeight: '600' },
 });

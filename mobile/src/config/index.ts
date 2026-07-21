@@ -39,6 +39,8 @@ export const config = {
   // --- Upload / sync (01 §3.4) ---
   /** Frames pulled from the queue per sync pass. */
   UPLOAD_BATCH: 5,
+  /** How often the sync engine wakes to drain the outbox. */
+  SYNC_INTERVAL_MS: 5000,
   /** Exponential backoff base and cap for failed uploads. */
   BACKOFF_BASE_MS: 2000,
   BACKOFF_MAX_MS: 300000,
@@ -56,6 +58,13 @@ export const config = {
  * (Slice 5, Q7); kept as a plain constant until then to avoid a premature dep.
  */
 export const API_BASE_URL = 'http://10.0.2.2:8000';
+
+/**
+ * Pilot auth token (plan Q7 stopgap). A long-lived JWT injected at build time
+ * for the pilot; empty in dev. sync/auth reads org_id + device_id from it, and
+ * the uploader sends it as a Bearer token. TODO(Faz 3): real login + rotation.
+ */
+export const PILOT_TOKEN = '';
 
 /** Backend endpoints (03 §4.1, plus the login endpoint agreed in Q7). */
 export const ENDPOINTS = {

@@ -1,4 +1,5 @@
 import type { CaptureFrame } from '../types/captureFrame';
+import type { DeviceIdentity } from '../types/models';
 import type { GpsFix } from './distanceTrigger';
 import { buildCaptureFrame } from './metadata';
 
@@ -10,10 +11,8 @@ import { buildCaptureFrame } from './metadata';
  * keeps the capture layer from importing sync/ui).
  */
 
-export interface CaptureContext {
-  orgId: string;
+export interface CaptureContext extends DeviceIdentity {
   sessionId: string;
-  deviceId: string;
 }
 
 export interface PhotoResult {

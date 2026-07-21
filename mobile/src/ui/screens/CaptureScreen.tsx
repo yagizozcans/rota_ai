@@ -1,11 +1,11 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import { HudOverlay } from '../hud/HudOverlay';
 import { ControlStack } from '../controls/ControlStack';
 import { useCaptureEngine } from '../capture/useCaptureEngine';
 import { useCaptureStore } from '../state/captureStore';
-import { DEV_IDENTITY } from '../state/session';
+import { getIdentity } from '../../sync/auth';
 import { frameStoreDir } from '../../storage/files';
 import { theme } from '../theme';
 
@@ -18,7 +18,8 @@ export function CaptureScreen() {
   const device = useCameraDevice('back');
   const cameraRef = useRef<Camera>(null);
   const recording = useCaptureStore((s) => s.recording);
-  const { start, stop, captureManual } = useCaptureEngine(cameraRef, DEV_IDENTITY);
+  const identity = useMemo(() => getIdentity(), []);
+  const { start, stop, captureManual } = useCaptureEngine(cameraRef, identity);
 
   const onToggleRecord = () => {
     if (recording) {

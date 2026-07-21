@@ -10,8 +10,8 @@ import { enqueue } from '../../storage/frameRepo';
 import { persistPhoto } from '../../storage/files';
 import { freeStorageBytes } from '../../storage/diskSpace';
 import type { SqlExecutor } from '../../storage/sqlExecutor';
+import type { DeviceIdentity } from '../../types/models';
 import { useCaptureStore } from '../state/captureStore';
-import type { DeviceIdentity } from '../state/session';
 
 /**
  * Assembles the capture loop for the screen: GPS stream → distance trigger →
