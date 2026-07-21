@@ -25,5 +25,10 @@ class Settings(BaseSettings):
     detect_conf: float = 0.4                   # docs/02 §4 default threshold
     detector_version: str = "stub-0"           # stamped onto detections when stubbing
 
+    # Auth (docs/03-backend-api.md §4/§6, plan Q7). Pilot uses long-lived JWTs
+    # signed with this secret; set a strong value via env in production.
+    jwt_secret: str = "dev-insecure-secret-change-me-in-production-0123456789"
+    jwt_algorithm: str = "HS256"
+
 
 settings = Settings()

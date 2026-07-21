@@ -17,19 +17,36 @@ class GPS(BaseModel):
 
 
 class CaptureFrame(BaseModel):
-    """docs/00-overview.md §4.1. frame_id/image_ref are set by the server."""
+    """docs/00-overview.md §4.1. frame_id + session_id are client-minted (plan Q1);
+    org_id and image_ref are advisory — the server trusts the token for tenancy
+    (§4.5) and recomputes image_ref (plan Q4)."""
 
+    frame_id: UUID
+    org_id: UUID | None = None
     session_id: UUID
     device_id: str | None = None
     timestamp: datetime | None = None
     gps: GPS
     heading_deg: float | None = None
+    image_ref: str | None = None
 
 
 # ---- Sessions ----
 class SessionCreate(BaseModel):
+    session_id: UUID          # client-minted (plan Q1) — idempotent upsert
     device_id: str | None = None
     user_id: UUID | None = None
+
+
+# ---- Auth (docs/03-backend-api.md §4, plan Q7) ----
+class LoginRequest(BaseModel):
+    org_id: UUID
+    device_id: str
+    role: str | None = None
+
+
+class TokenResponse(BaseModel):
+    token: str
 
 
 class SessionResponse(BaseModel):

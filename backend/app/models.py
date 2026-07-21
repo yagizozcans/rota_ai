@@ -25,6 +25,7 @@ class Session(Base):
     __tablename__ = "sessions"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)  # tenant (00-overview §4.5)
     device_id: Mapped[str | None] = mapped_column(String)
     user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -36,6 +37,7 @@ class Frame(Base):
     __tablename__ = "frames"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)  # tenant (00-overview §4.5)
     session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"))
     device_id: Mapped[str | None] = mapped_column(String)
     captured_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

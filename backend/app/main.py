@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .routers import frames, inventory, review, sessions
+from .routers import auth, frames, inventory, review, sessions
 from .taxonomy import ASSET_CLASSES
 
 app = FastAPI(title="RotaAI Backend", version="0.1.0")
@@ -25,6 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(sessions.router)
 app.include_router(frames.router)
 app.include_router(review.router)

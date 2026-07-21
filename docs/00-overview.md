@@ -28,7 +28,7 @@ Bu doküman seti, RotaAI'nin MVP'sini oluşturan tüm teknik katmanların gereks
 [01 MOBİL]  saha aracı foto + GPS toplar
      │  (HTTP upload: görüntü dosyası + JSON metadata)
      ▼
-[03 BACKEND]  yüklemeyi alır, S3'e yazar, işleme görevini kuyruğa atar
+[03 BACKEND]  yüklemeyi alır, S3'e ({org_id}/… ön-ekli) yazar, işleme görevini kuyruğa atar
      │  (Celery task: image_id + storage_path)
      ▼
 [02 AI]  YOLO26-s görüntüyü işler → tespit listesi (bbox + sınıf + güven skoru)
@@ -57,14 +57,17 @@ Sahada çekilen tek bir kare.
 ```json
 {
   "frame_id": "uuid",
+  "org_id": "uuid",              // kiracı (kurum/şirket) — bkz. §4.5
   "session_id": "uuid",          // bir sürüş oturumu
   "device_id": "string",
   "timestamp": "ISO8601",
   "gps": { "lat": 41.0, "lon": 28.9, "accuracy_m": 3.2, "speed_kmh": 45 },
   "heading_deg": 275.0,          // aracın yönü (gyroscope)
-  "image_ref": "storage_path"    // yüklenen görüntünün yolu
+  "image_ref": "storage_path"    // yüklenen görüntünün yolu (org_id ile ön-ekli, §4.5)
 }
 ```
+> Not: `org_id`, cihaz login'inde alınan token'dan da türetilebilir; kare gövdesinde taşınması izleme/hata ayıklamayı kolaylaştırır. Backend her durumda token'daki `org_id`'yi yetki kaynağı kabul eder (istemciye güvenmez).
+> `image_ref`, istemci tarafından deterministik anahtar (`{org_id}/{session_id}/{frame_id}.jpg`) olarak doldurulur ama **tavsiye niteliğindedir**: backend anahtarı token'ın `org_id`'si + id'lerden yeniden hesaplar ve yetkili olandır; uyuşmazlıkta kendi anahtarıyla yazıp uyarı loglar, yüklemeyi reddetmez (plan Q4). `frame_id` ve `session_id` istemci tarafından üretilir (plan Q1).
 
 ### 4.2 `Detection` (AI → Backend)
 AI'nin bir kare üzerinde bulduğu tek bir nesne.
@@ -85,6 +88,7 @@ Koordinatlandırılmış, onay sürecindeki envanter kaydı.
 ```json
 {
   "item_id": "uuid",
+  "org_id": "uuid",              // kiracı — kare/tespit zincirinden taşınır (§4.5)
   "detection_id": "uuid",
   "geom": "POINT(...)",          // PostGIS geometrisi
   "srid_source": 4326,           // WGS84
@@ -101,6 +105,13 @@ Koordinatlandırılmış, onay sürecindeki envanter kaydı.
 - **Hasar (damage) — OPSİYONEL MODÜL:** `pothole`, `crack_longitudinal`, `crack_transverse`, `crack_alligator`, `edge_deterioration`, `rutting`. MVP dışıdır, ayrı bir eklenti modülüyle gelir (bkz. `07-damage-module.md`).
 - `type` alanı `asset | damage` olarak ayrımı taşır; MVP'de yalnızca `asset` üretilir.
 
+### 4.5 Kiracı (Tenant) İzolasyonu — `org_id`
+Her veri parçası bir **kiracıya** (kurum/şirket, ör. bir belediye veya KGM bölge müdürlüğü) aittir. MVP'de kiracı **anahtarı** baştan gömülür; kiracı **yönetimi** (self-servis onboarding, kurum admin paneli, faturalama) Faz 3'e kalır — bkz. §6. Amaç: ileride pahalı veri göçünden (her nesneyi yeniden yollamak, her satıra sütun eklemek) kaçınmak ve kamu için **KVKK bazında kurum verisi ayrımını** baştan sağlamak.
+
+- **Model:** her `user`/`device` tek bir `org`'a bağlıdır. `org_id`, `CaptureFrame → Detection → InventoryItem` zinciri boyunca taşınır. Yetki kaynağı her zaman login token'ındaki `org_id`'dir (istemciye güvenilmez).
+- **Object storage (görüntü):** tek kova, **kiracı ön-ekli yol** → `{org_id}/{session_id}/{frame_id}.jpg`. Büyük/hassas müşteri için ölçekte ayrı kova opsiyonu (bkz. `06 §3`).
+- **Veritabanı (PostGIS):** ortak şema + kiracıya bağlı her tabloda `org_id` sütunu; **satır düzeyi güvenlik (RLS)** ile sorgular kiracılar arası sızmaz. Büyük müşteri ölçekte ayrı DB'ye terfi edebilir (bkz. `04 §4`).
+
 ## 5. MVP Kapsamı ve Fazlar
 
 | Faz | Süre | Kapsam | İlgili PRD'ler |
@@ -116,7 +127,7 @@ Koordinatlandırılmış, onay sürecindeki envanter kaydı.
 - **Yol hasarı tespiti** (çukur/çatlak) — opsiyonel eklenti modül, ayrı PRD (`07-damage-module.md`), Faz 3'te eklenir
 - Gerçek zamanlı/edge inference (her şey buluta yüklenip işlenir)
 - Hava durumu / kışlık bakım modülü (Faz 3)
-- Çoklu kurum/kiracı (multi-tenant) yönetimi (Faz 3)
+- Çoklu kurum/kiracı **yönetimi** (self-servis onboarding, kurum admin paneli, faturalama) — Faz 3. *Not: kiracı **anahtarı** (`org_id`) ve izolasyon (storage ön-eki + DB RLS) MVP'ye dahildir — bkz. §4.5.*
 - Mobil uygulamada canlı AI (sadece toplama yapar)
 
 ## 7. İlgili Doküman

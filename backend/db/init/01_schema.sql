@@ -7,16 +7,19 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- sürüş oturumları
 CREATE TABLE IF NOT EXISTS sessions (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id      UUID NOT NULL,                    -- kiracı (00-overview §4.5); from the auth token
     device_id   TEXT,
     user_id     UUID,
     started_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     ended_at    TIMESTAMPTZ,
     status      TEXT NOT NULL DEFAULT 'active'   -- active | completed
 );
+CREATE INDEX IF NOT EXISTS idx_sessions_org ON sessions (org_id);
 
 -- çekilen kareler
 CREATE TABLE IF NOT EXISTS frames (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id            UUID NOT NULL,                    -- kiracı (00-overview §4.5)
     session_id        UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
     device_id         TEXT,
     captured_at       TIMESTAMPTZ,
@@ -32,6 +35,7 @@ CREATE TABLE IF NOT EXISTS frames (
 );
 CREATE INDEX IF NOT EXISTS idx_frames_geom ON frames USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_frames_session ON frames (session_id);
+CREATE INDEX IF NOT EXISTS idx_frames_org ON frames (org_id);
 
 -- AI tespitleri
 CREATE TABLE IF NOT EXISTS detections (
