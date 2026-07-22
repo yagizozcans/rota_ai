@@ -20,7 +20,11 @@ jest.mock('react-native-vision-camera', () => ({
 
 jest.mock('react-native-geolocation-service', () => ({
   __esModule: true,
-  default: { watchPosition: jest.fn(() => 1), clearWatch: jest.fn() },
+  default: {
+    watchPosition: jest.fn(() => 1),
+    clearWatch: jest.fn(),
+    requestAuthorization: jest.fn(async () => 'granted'),
+  },
 }));
 
 jest.mock('@react-native-community/netinfo', () => ({

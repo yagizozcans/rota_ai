@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PermissionsAndroid, Platform } from 'react-native';
+import Geolocation from 'react-native-geolocation-service';
 import { useCameraPermission } from 'react-native-vision-camera';
 
 /**
@@ -16,12 +17,15 @@ export function usePermissions() {
 
   const request = useCallback(async (): Promise<boolean> => {
     const cam = hasCamera || (await requestCamera());
-    let loc = true;
+    let loc: boolean;
     if (Platform.OS === 'android') {
       const res = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
       loc = res === PermissionsAndroid.RESULTS.GRANTED;
+    } else {
+      // iOS: react-native-geolocation-service needs an explicit authorization request.
+      loc = (await Geolocation.requestAuthorization('whenInUse')) === 'granted';
     }
     setHasLocation(loc);
     return cam && loc;
