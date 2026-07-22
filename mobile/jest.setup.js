@@ -32,11 +32,6 @@ jest.mock('@react-native-community/netinfo', () => ({
   default: { addEventListener: jest.fn(() => jest.fn()) },
 }));
 
-jest.mock('@bam.tech/react-native-image-resizer', () => ({
-  __esModule: true,
-  default: { createResizedImage: jest.fn(async (uri) => ({ uri, width: 640, height: 480 })) },
-}));
-
 jest.mock('react-native-fs', () => ({
   __esModule: true,
   default: {
@@ -44,6 +39,8 @@ jest.mock('react-native-fs', () => ({
     mkdir: jest.fn(async () => undefined),
     moveFile: jest.fn(async () => undefined),
     exists: jest.fn(async () => true),
+    unlink: jest.fn(async () => undefined),
+    readFile: jest.fn(async () => ''),
     getFSInfo: jest.fn(async () => ({ freeSpace: 1_000_000_000, totalSpace: 2_000_000_000 })),
     stat: jest.fn(async () => ({ size: 0 })),
   },
