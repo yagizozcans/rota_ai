@@ -16,7 +16,8 @@ COPY pyproject.toml ./
 RUN pip install --no-cache-dir \
         "fastapi>=0.115" "uvicorn[standard]>=0.30" "python-multipart>=0.0.9" \
         "celery>=5.4" "redis>=5.0" "sqlalchemy>=2.0" "geoalchemy2>=0.15" \
-        "psycopg2-binary>=2.9" "pydantic>=2.7" "pydantic-settings>=2.3"
+        "psycopg2-binary>=2.9" "pydantic>=2.7" "pydantic-settings>=2.3" \
+        "pyjwt>=2.9"
 
 COPY app ./app
 
