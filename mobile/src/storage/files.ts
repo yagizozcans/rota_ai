@@ -35,6 +35,11 @@ export function fileExists(path: string): Promise<boolean> {
   return RNFS.exists(toFsPath(path));
 }
 
+/** Read a file as base64 (used by blur analysis to get JPEG bytes). */
+export function readBase64(path: string): Promise<string> {
+  return RNFS.readFile(toFsPath(path), 'base64');
+}
+
 /** Delete a stored frame after its upload is confirmed (01 §3.3). Idempotent. */
 export async function deleteFile(path: string): Promise<void> {
   try {

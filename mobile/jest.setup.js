@@ -28,6 +28,11 @@ jest.mock('@react-native-community/netinfo', () => ({
   default: { addEventListener: jest.fn(() => jest.fn()) },
 }));
 
+jest.mock('@bam.tech/react-native-image-resizer', () => ({
+  __esModule: true,
+  default: { createResizedImage: jest.fn(async (uri) => ({ uri, width: 640, height: 480 })) },
+}));
+
 jest.mock('react-native-fs', () => ({
   __esModule: true,
   default: {

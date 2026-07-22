@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { Camera } from 'react-native-vision-camera';
+import { analyzeBlur } from '../../capture/analyzeBlur';
 import { takePhoto } from '../../capture/camera';
 import { captureFrame, type PhotoResult } from '../../capture/captureController';
 import { initTriggerState, onFix, type GpsFix, type TriggerState } from '../../capture/distanceTrigger';
@@ -7,7 +8,7 @@ import { newUuid } from '../../capture/ids';
 import { startLocation } from '../../capture/location';
 import { openStorage } from '../../storage/db';
 import { enqueue } from '../../storage/frameRepo';
-import { persistPhoto } from '../../storage/files';
+import { deleteFile, persistPhoto } from '../../storage/files';
 import { freeStorageBytes } from '../../storage/diskSpace';
 import type { SqlExecutor } from '../../storage/sqlExecutor';
 import type { DeviceIdentity } from '../../types/models';
@@ -49,14 +50,22 @@ export function useCaptureEngine(
         const camera = cameraRef.current;
         const deps = {
           takePhoto: (): Promise<PhotoResult> => takePhoto(camera),
+          analyzeBlur,
+          discardPhoto: deleteFile,
           persist: persistPhoto,
           enqueue: (frame: Parameters<typeof enqueue>[1], localPath: string) =>
             enqueue(db, frame, localPath),
           newId: newUuid,
           now: Date.now,
         };
-        await captureFrame(deps, { ...identity, sessionId }, fix);
-        store.getState().onCaptured(Date.now());
+        const result = await captureFrame(deps, { ...identity, sessionId }, fix);
+        // Log every frame's variance for pilot calibration of BLUR_VARIANCE_MIN (Q2).
+        console.log(`[blur] score=${result.blurScore} ${result.frame ? 'kept' : 'dropped'}`);
+        if (result.frame) {
+          store.getState().onCaptured(Date.now());
+        } else {
+          store.getState().onDropped();
+        }
         if (++capturesSinceProbe.current >= 20) {
           capturesSinceProbe.current = 0;
           probeFreeSpace();

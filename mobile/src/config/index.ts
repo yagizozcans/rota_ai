@@ -33,6 +33,9 @@ export const config = {
   /** Laplacian variance (measured at 640px grayscale) below this ⇒ drop as blurry.
    *  Seed only — calibrate on pilot frames, bias low (Q2). */
   BLUR_VARIANCE_MIN: 25,
+  /** Width the frame is downscaled to before measuring blur, so the threshold is
+   *  resolution/device-independent (Q2). */
+  BLUR_ANALYSIS_WIDTH: 640,
   /** JPEG quality on capture — full-res upload for small/distant-sign detection (Q10). */
   JPEG_QUALITY: 0.9,
 

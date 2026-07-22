@@ -23,6 +23,7 @@ export function HudOverlay({ framePath }: { framePath: string }) {
   const freeBytes = useCaptureStore((s) => s.freeBytes);
   const framesPerMinute = useCaptureStore((s) => s.framesPerMinute());
   const capturedCount = useCaptureStore((s) => s.capturedCount);
+  const droppedCount = useCaptureStore((s) => s.droppedCount);
   const uploadedCount = useSyncStore((s) => s.uploadedCount);
 
   // Seeded average frame size until per-frame measurement lands (Slice 5+).
@@ -50,7 +51,7 @@ export function HudOverlay({ framePath }: { framePath: string }) {
 
       <View style={[styles.chip, styles.bottomRight]}>
         <Text style={styles.counts}>
-          {capturedCount} çekildi · {uploadedCount} yüklendi
+          {capturedCount} çekildi · {droppedCount} elendi · {uploadedCount} yüklendi
         </Text>
       </View>
 
