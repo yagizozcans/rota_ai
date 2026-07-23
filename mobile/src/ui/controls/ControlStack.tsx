@@ -5,7 +5,7 @@ import { BigButton } from './BigButton';
  * Right-side vertical stack of the three field controls (01 §3.7):
  *   Kayıt (Record) — starts/stops the distance-based auto capture; shown "active"
  *     while recording (the REC dot lives in the HUD).
- *   Foto — one manual frame, independent of the auto interval.
+ *   Foto — one manual frame, any time (recording or not; needs only a GPS fix).
  *   Öznitelik — placeholder for now (disabled), behaviour TBD (01 §3.7, Q?).
  */
 export function ControlStack({
@@ -25,7 +25,7 @@ export function ControlStack({
         active={recording}
         onPress={onToggleRecord}
       />
-      <BigButton label="Foto" glyph="◎" onPress={onPhoto} disabled={!recording} />
+      <BigButton label="Foto" glyph="◎" onPress={onPhoto} />
       <BigButton label="Öznitelik" glyph="＋" disabled />
     </View>
   );
