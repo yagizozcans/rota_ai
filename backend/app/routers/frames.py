@@ -40,6 +40,9 @@ async def upload_frame(
     session = db.get(Session, cf.session_id)
     if session is None:
         db.add(Session(id=cf.session_id, org_id=org_id, device_id=cf.device_id))
+        db.flush()  # insert the session before the frame — there is no ORM
+        # relationship() to teach the unit-of-work the FK ordering, so without
+        # this the frame INSERT can run first and violate frames_session_id_fkey.
     elif session.org_id != org_id:
         raise HTTPException(status_code=403, detail="session belongs to another org")
 
