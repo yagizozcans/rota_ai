@@ -19,8 +19,13 @@ import { useSyncStore } from './state/syncStore';
 function App() {
   const { status, request } = usePermissions();
   const incUploaded = useSyncStore((s) => s.incUploaded);
+  const startUpload = useSyncStore((s) => s.startUpload);
+  const endUpload = useSyncStore((s) => s.endUpload);
 
-  useEffect(() => startSync(incUploaded), [incUploaded]);
+  useEffect(
+    () => startSync({ onUploaded: incUploaded, onUploadStart: startUpload, onUploadEnd: endUpload }),
+    [incUploaded, startUpload, endUpload],
+  );
 
   return (
     <SafeAreaProvider>

@@ -100,3 +100,16 @@ test('connectivity dropping mid-batch stops the pass', async () => {
   expect(res.uploaded).toBe(1);
   expect(calls.uploaded).toEqual(['a']); // 'b' left for next pass
 });
+
+test('onUploadStart/onUploadEnd fire per frame for both ok and retry (progress bar)', async () => {
+  const events: string[] = [];
+  const { deps } = makeDeps({
+    queue: [queued('a'), queued('b', { attempts: 0 })],
+    upload: async (f) => (f.frame_id === 'b' ? 'retry' : 'ok'),
+    onUploadStart: (id) => events.push(`start:${id}`),
+    onUploadEnd: () => events.push('end'),
+  });
+  await runOnce(deps);
+  // Start fires before each upload; end fires after each attempt (ok AND retry).
+  expect(events).toEqual(['start:a', 'end', 'start:b', 'end']);
+});

@@ -9,6 +9,7 @@ import { RemainingHours } from './RemainingHours';
 import { TempIndicator } from './TempIndicator';
 import { FilePathTag } from './FilePathTag';
 import { RecDot } from './RecDot';
+import { UploadProgress } from './UploadProgress';
 import { useTemperature } from './useTemperature';
 
 /**
@@ -56,6 +57,7 @@ export function HudOverlay({ framePath }: { framePath: string }) {
       </View>
 
       <View style={[styles.chip, styles.bottomLeft]}>
+        <UploadProgress />
         <FilePathTag path={framePath} />
       </View>
     </View>

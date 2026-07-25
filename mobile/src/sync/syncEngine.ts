@@ -30,6 +30,10 @@ export interface SyncDeps {
   isOnline: () => boolean;
   now: () => number;
   onUploaded?: () => void;
+  /** Fired right before a frame's upload begins (drives the HUD progress bar). */
+  onUploadStart?: (frameId: string) => void;
+  /** Fired after a frame's upload attempt finishes (success or retry). */
+  onUploadEnd?: () => void;
 }
 
 export interface SyncPassResult {
@@ -55,6 +59,7 @@ export async function runOnce(deps: SyncDeps): Promise<SyncPassResult> {
       await deps.markUploaded(q.frame.frame_id);
       continue;
     }
+    deps.onUploadStart?.(q.frame.frame_id);
     const outcome = await deps.upload(q.frame, q.localPath);
     if (outcome === 'ok') {
       await deps.deleteFile(q.localPath);
@@ -65,6 +70,7 @@ export async function runOnce(deps: SyncDeps): Promise<SyncPassResult> {
       await deps.markFailed(q.frame.frame_id, nextAttemptAt(q.attempts, deps.now()));
       failed += 1;
     }
+    deps.onUploadEnd?.();
   }
   return { uploaded, failed };
 }
@@ -74,7 +80,9 @@ export async function runOnce(deps: SyncDeps): Promise<SyncPassResult> {
  * ticks on an interval and wakes immediately when connectivity returns.
  * Returns a stop function.
  */
-export function startSync(onUploaded?: () => void): () => void {
+export type SyncHooks = Pick<SyncDeps, 'onUploaded' | 'onUploadStart' | 'onUploadEnd'>;
+
+export function startSync(hooks: SyncHooks = {}): () => void {
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let deps: SyncDeps | null = null;
@@ -104,7 +112,7 @@ export function startSync(onUploaded?: () => void): () => void {
       markFailed: (id, at) => markFailed(db, id, at),
       isOnline: isSyncAllowed,
       now: Date.now,
-      onUploaded,
+      ...hooks,
     };
     tick();
   })();
