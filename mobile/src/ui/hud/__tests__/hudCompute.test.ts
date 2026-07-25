@@ -5,8 +5,25 @@ import {
   isStorageLow,
   formatTemp,
   isTempStale,
+  framesPerMinute,
 } from '../hudCompute';
 import { config } from '../../../config';
+
+describe('framesPerMinute', () => {
+  test('0 with fewer than two captures in the window', () => {
+    expect(framesPerMinute([], 100_000)).toBe(0);
+    expect(framesPerMinute([100_000], 100_000)).toBe(0);
+  });
+  test('rate over the trailing window', () => {
+    // 3 captures spanning 30 s ⇒ 3 / 30_000ms × 60_000 = 6/min.
+    const now = 100_000;
+    expect(framesPerMinute([now - 30_000, now - 15_000, now], now)).toBeCloseTo(6, 5);
+  });
+  test('ignores captures older than 60 s', () => {
+    const now = 200_000;
+    expect(framesPerMinute([now - 90_000, now - 80_000], now)).toBe(0);
+  });
+});
 
 describe('gpsAccuracyLevel (thresholds 10 / 20 m)', () => {
   test('green at or below WARN', () => {

@@ -33,11 +33,9 @@ interface CaptureState {
   onCaptured: (at: number) => void;
   onDropped: () => void;
   setFreeBytes: (bytes: number) => void;
-  /** Captures in the trailing window, expressed per minute (for remaining-hours). */
-  framesPerMinute: () => number;
 }
 
-export const useCaptureStore = create<CaptureState>((set, get) => ({
+export const useCaptureStore = create<CaptureState>((set) => ({
   recording: false,
   session: null,
   fix: null,
@@ -62,15 +60,4 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   onDropped: () => set((s) => ({ droppedCount: s.droppedCount + 1 })),
 
   setFreeBytes: (bytes) => set({ freeBytes: bytes }),
-
-  framesPerMinute: () => {
-    const { recentCaptures } = get();
-    const now = Date.now();
-    const inWindow = recentCaptures.filter((t) => now - t <= RATE_WINDOW_MS);
-    if (inWindow.length < 2) {
-      return 0;
-    }
-    const spanMs = now - inWindow[0];
-    return spanMs > 0 ? (inWindow.length / spanMs) * RATE_WINDOW_MS : 0;
-  },
 }));

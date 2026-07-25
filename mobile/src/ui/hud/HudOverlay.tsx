@@ -3,7 +3,7 @@ import { config } from '../../config';
 import { useCaptureStore } from '../state/captureStore';
 import { useSyncStore } from '../state/syncStore';
 import { theme } from '../theme';
-import { estimateRemainingMinutes } from './hudCompute';
+import { estimateRemainingMinutes, framesPerMinute } from './hudCompute';
 import { GpsAccuracy } from './GpsAccuracy';
 import { RemainingHours } from './RemainingHours';
 import { TempIndicator } from './TempIndicator';
@@ -22,7 +22,9 @@ export function HudOverlay({ framePath }: { framePath: string }) {
   const recording = useCaptureStore((s) => s.recording);
   const fix = useCaptureStore((s) => s.fix);
   const freeBytes = useCaptureStore((s) => s.freeBytes);
-  const framesPerMinute = useCaptureStore((s) => s.framesPerMinute());
+  // Read the stable timestamp array and compute the rate here — NOT via a
+  // selector (a time-varying selector result caused an infinite render loop).
+  const recentCaptures = useCaptureStore((s) => s.recentCaptures);
   const capturedCount = useCaptureStore((s) => s.capturedCount);
   const droppedCount = useCaptureStore((s) => s.droppedCount);
   const uploadedCount = useSyncStore((s) => s.uploadedCount);
@@ -32,7 +34,7 @@ export function HudOverlay({ framePath }: { framePath: string }) {
   const remainingMinutes = estimateRemainingMinutes(
     freeBytes ?? 0,
     avgFrameBytes,
-    framesPerMinute,
+    framesPerMinute(recentCaptures, Date.now()),
   );
   const { tempC, stale } = useTemperature(fix?.lat ?? null, fix?.lon ?? null);
 

@@ -26,12 +26,28 @@ export function gpsAccuracyLevel(accuracyM: number): GpsLevel {
 export function estimateRemainingMinutes(
   freeBytes: number,
   avgFrameBytes: number,
-  framesPerMinute: number,
+  framesPerMin: number,
 ): number {
-  if (framesPerMinute <= 0 || avgFrameBytes <= 0) {
+  if (framesPerMin <= 0 || avgFrameBytes <= 0) {
     return Infinity;
   }
-  return freeBytes / (framesPerMinute * avgFrameBytes);
+  return freeBytes / (framesPerMin * avgFrameBytes);
+}
+
+/**
+ * Capture rate (frames/minute) over the last 60 s, from capture timestamps.
+ * Pure with `now` passed in, so it is NEVER computed inside a store selector —
+ * doing that (a value that changes every call via Date.now()) caused an
+ * infinite render loop once there were ≥2 captures in the window.
+ */
+export function framesPerMinute(recentCaptures: number[], now: number): number {
+  const windowMs = 60_000;
+  const inWindow = recentCaptures.filter((t) => now - t <= windowMs);
+  if (inWindow.length < 2) {
+    return 0;
+  }
+  const spanMs = now - inWindow[0];
+  return spanMs > 0 ? (inWindow.length / spanMs) * windowMs : 0;
 }
 
 /** Human label for remaining time: "~6.5 saat", "~45 dk", or "—" when unknown. */

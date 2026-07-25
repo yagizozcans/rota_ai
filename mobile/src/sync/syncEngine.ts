@@ -60,17 +60,21 @@ export async function runOnce(deps: SyncDeps): Promise<SyncPassResult> {
       continue;
     }
     deps.onUploadStart?.(q.frame.frame_id);
-    const outcome = await deps.upload(q.frame, q.localPath);
-    if (outcome === 'ok') {
-      await deps.deleteFile(q.localPath);
-      await deps.markUploaded(q.frame.frame_id);
-      uploaded += 1;
-      deps.onUploaded?.();
-    } else {
-      await deps.markFailed(q.frame.frame_id, nextAttemptAt(q.attempts, deps.now()));
-      failed += 1;
+    try {
+      const outcome = await deps.upload(q.frame, q.localPath);
+      if (outcome === 'ok') {
+        await deps.deleteFile(q.localPath);
+        await deps.markUploaded(q.frame.frame_id);
+        uploaded += 1;
+        deps.onUploaded?.();
+      } else {
+        await deps.markFailed(q.frame.frame_id, nextAttemptAt(q.attempts, deps.now()));
+        failed += 1;
+      }
+    } finally {
+      // Always clear the in-flight indicator, even if a step above throws.
+      deps.onUploadEnd?.();
     }
-    deps.onUploadEnd?.();
   }
   return { uploaded, failed };
 }

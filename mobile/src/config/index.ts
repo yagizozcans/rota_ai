@@ -44,6 +44,9 @@ export const config = {
   UPLOAD_BATCH: 5,
   /** How often the sync engine wakes to drain the outbox. */
   SYNC_INTERVAL_MS: 5000,
+  /** Per-upload timeout — RN fetch() has none, so an unreachable host would hang
+   *  forever (stuck progress bar, no retry). On timeout the upload fails → backoff. */
+  UPLOAD_TIMEOUT_MS: 20000,
   /** Exponential backoff base and cap for failed uploads. */
   BACKOFF_BASE_MS: 2000,
   BACKOFF_MAX_MS: 300000,
