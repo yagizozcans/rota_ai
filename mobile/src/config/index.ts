@@ -63,14 +63,20 @@ export const config = {
  * machine's localhost. Real env injection arrives with the auth stopgap
  * (Slice 5, Q7); kept as a plain constant until then to avoid a premature dep.
  */
-export const API_BASE_URL = 'http://10.0.2.2:8000';
+// LOCAL TEST VALUE (uncommitted): the Mac's LAN IP so the physical iPhone can
+// reach the backend. Update if your Mac's IP changes; restore 10.0.2.2 for the
+// Android emulator.
+export const API_BASE_URL = 'http://192.168.1.240:8000';
 
 /**
  * Pilot auth token (plan Q7 stopgap). A long-lived JWT injected at build time
  * for the pilot; empty in dev. sync/auth reads org_id + device_id from it, and
  * the uploader sends it as a Bearer token. TODO(Faz 3): real login + rotation.
  */
-export const PILOT_TOKEN = '';
+// LOCAL TEST VALUE (uncommitted): dev JWT (org=1111…, device=iphone-pilot) from
+// POST /api/v1/auth/login. Without it the backend returns 401 on upload.
+export const PILOT_TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0xMTExMTExMTExMTEiLCJkZXZpY2VfaWQiOiJpcGhvbmUtcGlsb3QiLCJyb2xlIjoic2FoYV9rdWxsYW5pY2kifQ.6fSvLQ1dhW4lQbVhzEA3v5UsIz5-GPXuD4EqkbMsNNc';
 
 /** Backend endpoints (03 §4.1, plus the login endpoint agreed in Q7). */
 export const ENDPOINTS = {

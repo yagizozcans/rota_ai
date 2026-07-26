@@ -28,16 +28,19 @@
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-	  <!-- Do not change NSAllowsArbitraryLoads to true, or you will risk app rejection! -->
+		<!-- DEV/PILOT ONLY: the Mac's LAN IP is public-range (161.9.x, ITU
+		     Wi-Fi), which NSAllowsLocalNetworking does NOT exempt. Allow
+		     cleartext HTTP so the physical iPhone can reach the local backend.
+		     REVERT for any App Store build (ship HTTPS + a real domain). -->
 		<key>NSAllowsArbitraryLoads</key>
-		<false/>
-		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Yol görüntülerini toplamak için kameraya erişim gerekir.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Karelerin konumunu etiketlemek için konuma erişim gerekir.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
