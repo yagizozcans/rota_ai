@@ -14,13 +14,15 @@ Tüm katmanların üzerinde çalıştığı altyapıyı, deployment'ı, depolama
 
 ## 3. Depolama
 - Görüntüler: S3-uyumlu object storage — **Cloudflare R2 veya Backblaze B2** (egress ücreti AWS S3'ten düşük, hacimli görüntü için önemli).
-- Veritabanı: PostgreSQL+PostGIS (VPS üstünde MVP; managed Faz 3).
+- **Kiracı ayrımı:** tek kova, kiracı ön-ekli yol → `{org_id}/{session_id}/{frame_id}.jpg` (bkz. `00-overview §4.5`). İzolasyon prefix bazlı; büyük/hassas müşteri için ölçekte ayrı kova opsiyonu.
+- Veritabanı: PostgreSQL+PostGIS (VPS üstünde MVP; managed Faz 3). Kiracı ayrımı ortak şema + `org_id` + satır düzeyi güvenlik (RLS) ile (bkz. `04 §4`).
 - Yedekleme: günlük DB dump + object storage versiyonlama.
 
 ## 4. KVKK / Veri Gizliliği (kamu için zorunlu)
 - **Plaka + yüz otomatik bulanıklaştırma** — MVP'ye dahil. Görüntüler işlenirken kişisel veri anonimleştirilir (RoadAI'nin standart uygulaması). Bu, kamu ihalesinde sorulacak ilk sorulardan biri.
 - Veri Türkiye'de/AB'de tutulmalı tercih edilir (kamu hassasiyeti) — VPS/storage bölge seçimi buna göre.
 - Erişim logları + rol bazlı erişim (03 §6).
+- **Kurum verisi ayrımı:** her kurumun verisi `org_id` ile mantıksal olarak izole edilir (storage ön-eki + DB RLS, bkz. `00-overview §4.5`). Kamu ihalesinde "verimiz başka kurumla karışır mı" sorusunun doğrudan cevabı.
 - Veri saklama politikası: ham görüntüler işlendikten sonra bir süre sonra silinebilir/arşivlenir (kurumla anlaşmaya göre).
 
 ## 5. CI/CD (MVP — hafif)
