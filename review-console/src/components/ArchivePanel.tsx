@@ -4,9 +4,8 @@ import { fetchInventory, type InventoryItem } from '../api'
 /**
  * Left sidebar: browse already-reviewed items as a folder tree (Onaylanan /
  * Reddedilen / Düzeltilen), listed by filename only — NO images are loaded here,
- * on purpose (this is meant to be a fast, lightweight audit view, unlike the
- * main review panel which renders the photo). Selecting a row shows its raw
- * JSON instead of a picture.
+ * on purpose (this is meant to be a fast, lightweight audit view). Selecting a
+ * row asks the parent (App) to open that item's image in the main panel.
  */
 
 const FOLDERS: { status: string; label: string; icon: string }[] = [
@@ -24,13 +23,21 @@ function filenameOf(item: InventoryItem): string {
 interface ArchivePanelProps {
   /** Bump this (e.g. after every approve/reject/correct) to trigger a refetch. */
   refreshKey?: number
+  /** item_id of the item currently open in the main panel, if any (controlled by App). */
+  selectedId?: string | null
+  /** Called when the user clicks a row — App opens that item's image in the main panel. */
+  onSelect?: (item: InventoryItem) => void
+  /** Called when the JSON detail card's ✕ is clicked — clears the selection in App too. */
+  onClose?: () => void
 }
 
-export function ArchivePanel({ refreshKey }: ArchivePanelProps) {
+export function ArchivePanel({ refreshKey, selectedId, onSelect, onClose }: ArchivePanelProps) {
   const [items, setItems] = useState<Record<string, InventoryItem[]>>({})
   const [open, setOpen] = useState<Record<string, boolean>>({ approved: true })
-  const [selected, setSelected] = useState<InventoryItem | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const selectedItem =
+    (selectedId && Object.values(items).flat().find((it) => it.item_id === selectedId)) || null
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -96,10 +103,10 @@ export function ArchivePanel({ refreshKey }: ArchivePanelProps) {
                     {list.map((it) => (
                       <button
                         key={it.item_id}
-                        onClick={() => setSelected(it)}
+                        onClick={() => onSelect?.(it)}
                         title={filenameOf(it)}
                         className={`w-full text-left px-2 py-1 rounded-md text-xs font-mono truncate transition-colors ${
-                          selected?.item_id === it.item_id
+                          selectedId === it.item_id
                             ? 'bg-amber-400/20 text-amber-300'
                             : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200'
                         }`}
@@ -116,19 +123,19 @@ export function ArchivePanel({ refreshKey }: ArchivePanelProps) {
         </div>
       </div>
 
-      {selected && (
+      {selectedItem && (
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 flex flex-col gap-2 max-h-72 shrink-0">
           <div className="flex items-center justify-between shrink-0">
-            <h3 className="text-xs font-semibold text-neutral-400 truncate">{filenameOf(selected)}</h3>
+            <h3 className="text-xs font-semibold text-neutral-400 truncate">{filenameOf(selectedItem)}</h3>
             <button
-              onClick={() => setSelected(null)}
+              onClick={onClose}
               className="text-neutral-600 hover:text-neutral-300 text-xs shrink-0 ml-2"
             >
               ✕
             </button>
           </div>
           <pre className="text-[11px] leading-snug font-mono text-neutral-300 overflow-auto whitespace-pre-wrap break-all">
-            {JSON.stringify(selected, null, 2)}
+            {JSON.stringify(selectedItem, null, 2)}
           </pre>
         </div>
       )}
