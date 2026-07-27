@@ -7,7 +7,7 @@
 #   Postgres: localhost:5432 (rotaai/rotaai)
 
 x-backend-env: &backend-env
-  DATABASE_URL: postgresql+psycopg2://rotaai:rotaai@db:5432/rotaai
+  DATABASE_URL: postgresql+psycopg2://rotaai_app:rotaai_app@db:5432/rotaai   # non-superuser app role so RLS applies (backend/db/init/01_schema.sql)
   REDIS_URL: redis://redis:6379/0
   STORAGE_DIR: /data/images
   DETECT_CONF: "0.4"

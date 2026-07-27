@@ -11,7 +11,7 @@ from geoalchemy2.elements import WKTElement
 from sqlalchemy.orm import Session as DbSession
 
 from ..auth import Identity, require_identity
-from ..db import get_db
+from ..deps import get_tenant_db
 from ..models import Frame, Session
 from ..schemas import CaptureFrame, FrameResponse
 from ..storage import storage
@@ -25,7 +25,7 @@ async def upload_frame(
     metadata: str = Form(..., description="CaptureFrame JSON (docs/00-overview §4.1)"),
     image: UploadFile = File(...),
     identity: Identity = Depends(require_identity),
-    db: DbSession = Depends(get_db),
+    db: DbSession = Depends(get_tenant_db),
 ) -> FrameResponse:
     cf = CaptureFrame.model_validate_json(metadata)
     org_id = identity.org_id  # tenant authority is the token, never the client (§4.5)
@@ -68,6 +68,8 @@ async def upload_frame(
     db.add(frame)
     db.commit()
 
-    # Queue async processing; worker reads the image from shared storage.
-    process_frame.delay(str(cf.frame_id), storage.path(key))
+    # Queue async processing; worker reads the image from shared storage. org_id
+    # is passed so the worker can set its own RLS tenant context (it runs outside
+    # any request) and stamp detections/inventory with the tenant (docs/04 §4).
+    process_frame.delay(str(cf.frame_id), storage.path(key), str(org_id))
     return FrameResponse(frame_id=cf.frame_id, processing_status="pending")

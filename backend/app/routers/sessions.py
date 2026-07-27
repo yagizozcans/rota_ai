@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session as DbSession
 
 from ..auth import Identity, require_identity
-from ..db import get_db
+from ..deps import get_tenant_db
 from ..models import Session
 from ..schemas import SessionCreate, SessionResponse
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/v1/sessions", tags=["sessions"])
 def create_session(
     body: SessionCreate,
     identity: Identity = Depends(require_identity),
-    db: DbSession = Depends(get_db),
+    db: DbSession = Depends(get_tenant_db),
 ) -> SessionResponse:
     """Idempotent upsert of a client-minted session (plan Q1). Repeated calls with
     the same id are a no-op; org_id comes from the token (§4.5)."""
@@ -42,7 +42,7 @@ def create_session(
 
 
 @router.post("/{session_id}/complete", response_model=SessionResponse)
-def complete_session(session_id: UUID, db: DbSession = Depends(get_db)) -> SessionResponse:
+def complete_session(session_id: UUID, db: DbSession = Depends(get_tenant_db)) -> SessionResponse:
     session = db.get(Session, session_id)
     if session is None:
         raise HTTPException(status_code=404, detail="session not found")
