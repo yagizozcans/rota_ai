@@ -18,13 +18,16 @@ Tespit edilen envanter öğelerini mekansal olarak depolamak, koordinat sistemle
 - **Kural:** ham veri her zaman WGS84 saklanır; dönüşüm çıktı anında (`ST_Transform`) yapılır — böylece tek kaynak veri, çoklu hedef sistem.
 
 ## 4. Veri Modeli (ana tablolar)
-- `sessions` — sürüş oturumları (id, cihaz, başlangıç/bitiş, kullanıcı).
-- `frames` — çekilen kareler (id, session_id, geom POINT, heading, timestamp, image_ref, gps_accuracy).
-- `detections` — AI tespitleri (id, frame_id, class, bbox, confidence, model_version).
-- `inventory_items` — koordinatlandırılmış envanter (id, detection_id, geom, class, severity, review_status, reviewer_id, reviewed_at) → 00-overview §4.3.
-- `training_feedback` — reddedilen/düzeltilen örnekler (02 active learning'e besleme).
+- `organizations` — kiracılar (id, ad, tür: belediye/KGM/özel). Kiracı anahtarının kök tablosu (bkz. `00-overview §4.5`).
+- `sessions` — sürüş oturumları (id, **org_id**, cihaz, başlangıç/bitiş, kullanıcı).
+- `frames` — çekilen kareler (id, **org_id**, session_id, geom POINT, heading, timestamp, image_ref, gps_accuracy).
+- `detections` — AI tespitleri (id, **org_id**, frame_id, class, bbox, confidence, model_version).
+- `inventory_items` — koordinatlandırılmış envanter (id, **org_id**, detection_id, geom, class, severity, review_status, reviewer_id, reviewed_at) → 00-overview §4.3.
+- `training_feedback` — reddedilen/düzeltilen örnekler (id, **org_id**, …) — 02 active learning'e besleme.
 
 Tüm geometrik alanlar PostGIS `geometry(Point, 4326)`; mekansal indeks (GIST) zorunlu.
+
+**Kiracı izolasyonu:** Kiracıya bağlı her tabloda `org_id` sütunu bulunur ve **satır düzeyi güvenlik (Row-Level Security)** ile oturumdaki `org_id`'ye göre filtrelenir — böylece bir kurumun sorgusu diğerinin verisine erişemez (bkz. `00-overview §4.5`). `org_id` üzerine indeks önerilir. Büyük/hassas müşteri ölçekte ayrı DB'ye terfi edebilir (ortak şema → ayrı instance).
 
 ## 5. Çıktı / Export
 - **GeoJSON export** (MVP): onaylı `inventory_items` filtrelenip indirilebilir.
@@ -49,6 +52,7 @@ Tüm geometrik alanlar PostGIS `geometry(Point, 4326)`; mekansal indeks (GIST) z
 
 ## 9. Kabul Kriterleri
 - [ ] Tespitler WGS84 POINT olarak PostGIS'e yazılıyor, mekansal indeks çalışıyor.
+- [ ] Her kayıt `org_id` taşıyor; RLS ile bir kiracının sorgusu başka kiracının verisini döndürmüyor.
 - [ ] Export, kurumun TUSAGA-Aktif/ITRF sisteminde doğru koordinatla çıkıyor.
 - [ ] Onaylı envanter GeoJSON olarak indirilip QGIS'te doğru konumda açılıyor.
 - [ ] Ardışık kare çift sayımı makul ölçüde tekilleştiriliyor.

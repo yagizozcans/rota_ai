@@ -14,6 +14,7 @@ dependencies = [
     "psycopg2-binary>=2.9",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
+    "pyjwt>=2.9",                # JWT auth (docs/03 §4/§6, plan Q7)
 ]
 
 # The real model is optional — the worker stubs detections until these are present

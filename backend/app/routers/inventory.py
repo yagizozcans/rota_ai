@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session as DbSession
 
-from ..db import get_db
+from ..deps import get_tenant_db
 from ..models import Detection, Frame, InventoryItem
 
 router = APIRouter(prefix="/api/v1/inventory", tags=["inventory"])
@@ -24,7 +24,7 @@ def list_inventory(
     status: str = "approved",
     asset_class: str | None = None,
     limit: int = 500,
-    db: DbSession = Depends(get_db),
+    db: DbSession = Depends(get_tenant_db),
 ) -> list[dict]:
     """Full item detail for any review_status (approved/rejected/corrected/pending).
 
@@ -76,7 +76,7 @@ def list_inventory(
 def export_geojson(
     status: str = "approved",
     srid: int = 4326,
-    db: DbSession = Depends(get_db),
+    db: DbSession = Depends(get_tenant_db),
 ) -> dict:
     stmt = (
         select(

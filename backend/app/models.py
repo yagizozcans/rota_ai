@@ -21,10 +21,22 @@ class Base(DeclarativeBase):
     pass
 
 
+class Organization(Base):
+    """Tenant root (docs/04 §4). Every tenant-bound row FKs back to this."""
+
+    __tablename__ = "organizations"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    type: Mapped[str] = mapped_column(String, nullable=False)  # kgm | belediye | ozel
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class Session(Base):
     __tablename__ = "sessions"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)  # tenant (00-overview §4.5)
     device_id: Mapped[str | None] = mapped_column(String)
     user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -36,6 +48,7 @@ class Frame(Base):
     __tablename__ = "frames"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)  # tenant (00-overview §4.5)
     session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"))
     device_id: Mapped[str | None] = mapped_column(String)
     captured_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -54,6 +67,7 @@ class Detection(Base):
     __tablename__ = "detections"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)  # tenant (00-overview §4.5)
     frame_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("frames.id", ondelete="CASCADE"))
     type: Mapped[str] = mapped_column(String, default="asset")  # asset | damage
     # 'class' is the contract key (docs/00-overview §4.2); Python attr is class_name.
@@ -68,6 +82,7 @@ class InventoryItem(Base):
     __tablename__ = "inventory_items"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)  # tenant (00-overview §4.5)
     detection_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("detections.id", ondelete="CASCADE"))
     geom: Mapped[str] = mapped_column(Geometry("POINT", srid=4326), nullable=False)
     srid_source: Mapped[int] = mapped_column(Integer, default=4326)
@@ -86,6 +101,7 @@ class TrainingFeedback(Base):
     __tablename__ = "training_feedback"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)  # tenant (00-overview §4.5)
     inventory_item_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("inventory_items.id", ondelete="SET NULL")
     )

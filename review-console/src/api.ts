@@ -3,6 +3,35 @@
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
+// Tenant the console reviews (docs/04 §4). The backend enforces Row-Level
+// Security, so every tenant endpoint needs a Bearer token carrying this org_id;
+// defaults to the pilot org seeded in db/init/01_schema.sql. The token is minted
+// once via the pilot login (plan Q7) and cached for the session.
+const ORG_ID = import.meta.env.VITE_ORG_ID ?? '11111111-1111-1111-1111-111111111111'
+
+let tokenPromise: Promise<string> | null = null
+
+function getToken(): Promise<string> {
+  if (!tokenPromise) {
+    tokenPromise = fetch(`${API_BASE}/api/v1/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ org_id: ORG_ID, device_id: 'review-console', role: 'harita_muhendisi' }),
+    })
+      .then(asJson<{ token: string }>)
+      .then((d) => d.token)
+      .catch((err) => {
+        tokenPromise = null // let the next call retry a failed login
+        throw err
+      })
+  }
+  return tokenPromise
+}
+
+async function authHeaders(extra: Record<string, string> = {}): Promise<Record<string, string>> {
+  return { Authorization: `Bearer ${await getToken()}`, ...extra }
+}
+
 export type Severity = 'low' | 'medium' | 'high'
 export type Decision = 'approved' | 'rejected' | 'corrected'
 
@@ -52,8 +81,10 @@ async function asJson<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export function fetchQueue(): Promise<ReviewQueueItem[]> {
-  return fetch(`${API_BASE}/api/v1/review/queue`).then(asJson<ReviewQueueItem[]>)
+export async function fetchQueue(): Promise<ReviewQueueItem[]> {
+  return fetch(`${API_BASE}/api/v1/review/queue`, { headers: await authHeaders() }).then(
+    asJson<ReviewQueueItem[]>,
+  )
 }
 
 export function fetchTaxonomy(): Promise<string[]> {
@@ -62,10 +93,13 @@ export function fetchTaxonomy(): Promise<string[]> {
     .then((d) => d.asset_classes)
 }
 
-export function submitDecision(itemId: string, payload: ReviewDecisionPayload): Promise<unknown> {
+export async function submitDecision(
+  itemId: string,
+  payload: ReviewDecisionPayload,
+): Promise<unknown> {
   return fetch(`${API_BASE}/api/v1/review/${itemId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(payload),
   }).then(asJson)
 }
@@ -74,7 +108,9 @@ export function imageUrl(imageRef: string): string {
   return `${API_BASE}/media/${imageRef}`
 }
 
-export function fetchInventory(status: string): Promise<InventoryItem[]> {
+export async function fetchInventory(status: string): Promise<InventoryItem[]> {
   const params = new URLSearchParams({ status, limit: '200' })
-  return fetch(`${API_BASE}/api/v1/inventory?${params}`).then(asJson<InventoryItem[]>)
+  return fetch(`${API_BASE}/api/v1/inventory?${params}`, { headers: await authHeaders() }).then(
+    asJson<InventoryItem[]>,
+  )
 }

@@ -18,3 +18,10 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# Registers the RLS after_begin listener on SessionLocal (tenant isolation).
+# Imported here so any process that uses the DB (API + Celery worker) wires it up
+# by importing app.db, without each caller having to remember. Must come after
+# SessionLocal is defined. See app/rls.py.
+from . import rls  # noqa: E402,F401

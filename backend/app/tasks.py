@@ -22,13 +22,18 @@ from .celery_app import celery_app
 from .db import SessionLocal
 from .ml import run_detection
 from .models import Detection, Frame, InventoryItem
+from .rls import set_session_org
 
 log = logging.getLogger("rotaai.tasks")
 
 
 @celery_app.task(name="process_frame", bind=True, max_retries=3, default_retry_delay=10)
-def process_frame(self, frame_id: str, image_path: str) -> dict:
+def process_frame(self, frame_id: str, image_path: str, org_id: str) -> dict:
     db = SessionLocal()
+    # The worker runs outside any request, so it must set its own RLS tenant
+    # context (docs/04 §4). Without this the frame lookup below is filtered out
+    # and the detection/inventory INSERTs fail their WITH CHECK policy.
+    set_session_org(db, org_id)
     try:
         frame = db.get(Frame, frame_id)
         if frame is None:
@@ -42,6 +47,7 @@ def process_frame(self, frame_id: str, image_path: str) -> dict:
         n_items = 0
         for d in raw_dets:
             det = Detection(
+                org_id=frame.org_id,
                 frame_id=frame.id,
                 type=d.get("type", "asset"),
                 class_name=d["class"],
@@ -58,6 +64,7 @@ def process_frame(self, frame_id: str, image_path: str) -> dict:
             if frame.gps_lat is None or frame.gps_lon is None:
                 continue  # can't place without a fix; detection is still recorded
             item = InventoryItem(
+                org_id=frame.org_id,
                 detection_id=det.id,
                 geom=WKTElement(f"POINT({frame.gps_lon} {frame.gps_lat})", srid=4326),
                 srid_source=4326,

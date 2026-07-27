@@ -4,6 +4,7 @@ import {
   fetchTaxonomy,
   submitDecision,
   imageUrl,
+  type InventoryItem,
   type ReviewQueueItem,
   type Severity,
 } from './api'
@@ -11,6 +12,12 @@ import { BBoxImage } from './components/BBoxImage'
 import { MapPreview } from './components/MapPreview'
 import { CorrectPanel } from './components/CorrectPanel'
 import { ArchivePanel } from './components/ArchivePanel'
+
+const STATUS_LABEL: Record<string, string> = {
+  approved: '✅ Onaylandı',
+  rejected: '❌ Reddedildi',
+  corrected: '✏️ Düzeltildi',
+}
 
 export default function App() {
   const [queue, setQueue] = useState<ReviewQueueItem[]>([])
@@ -28,6 +35,9 @@ export default function App() {
   // Bumped after every decision so ArchivePanel knows to refetch — it has no
   // other way to learn that an approve/reject/correct just changed its data.
   const [archiveVersion, setArchiveVersion] = useState(0)
+
+  // Archive item currently opened for viewing in the main panel, if any.
+  const [archiveSelected, setArchiveSelected] = useState<InventoryItem | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -131,6 +141,10 @@ export default function App() {
         if (e.key === 'Enter') confirmCorrect()
         return
       }
+      if (archiveSelected) {
+        if (e.key === 'Escape') setArchiveSelected(null)
+        return
+      }
       switch (e.key.toLowerCase()) {
         case 'a':
           approve()
@@ -151,7 +165,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [correcting, approve, reject, openCorrect, goNext, goPrev, confirmCorrect])
+  }, [correcting, archiveSelected, approve, reject, openCorrect, goNext, goPrev, confirmCorrect])
 
   return (
     <div className="h-screen flex flex-col p-4 gap-4">
@@ -181,10 +195,81 @@ export default function App() {
       )}
 
       <div className="flex-1 flex gap-4 min-h-0">
-        {/* Left sidebar — browse already-reviewed items without loading images (folder-tree + JSON) */}
-        <ArchivePanel refreshKey={archiveVersion} />
+        {/* Left sidebar — browse already-reviewed items without loading images (folder-tree) */}
+        <ArchivePanel
+          refreshKey={archiveVersion}
+          selectedId={archiveSelected?.item_id ?? null}
+          onSelect={setArchiveSelected}
+          onClose={() => setArchiveSelected(null)}
+        />
 
-        {loading ? (
+        {archiveSelected ? (
+          <div className="flex-1 grid grid-cols-3 gap-4 min-h-0">
+            {/* Archived item's image — same framed layout as the review view, read-only */}
+            <div className="col-span-2 relative min-h-0">
+              <BBoxImage
+                src={archiveSelected.image_ref ? imageUrl(archiveSelected.image_ref) : ''}
+                bbox={archiveSelected.bbox}
+                label={`${archiveSelected.class} ${
+                  archiveSelected.confidence != null ? Math.round(archiveSelected.confidence * 100) + '%' : ''
+                }`}
+              />
+              <button
+                onClick={() => setArchiveSelected(null)}
+                title="Kapat (Esc)"
+                className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-black/60 hover:bg-black/80 text-neutral-200 text-sm transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Right column: map + read-only info */}
+            <div className="flex flex-col gap-4 min-h-0">
+              <div className="h-56 shrink-0">
+                <MapPreview lat={archiveSelected.lat} lon={archiveSelected.lon} />
+              </div>
+
+              <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Durum</span>
+                  <span className="text-neutral-200 font-medium">
+                    {STATUS_LABEL[archiveSelected.review_status] ?? archiveSelected.review_status}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Sınıf</span>
+                  <span className="text-neutral-200 font-medium">{archiveSelected.class}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Güven</span>
+                  <span className="text-neutral-200">
+                    {archiveSelected.confidence != null ? `${Math.round(archiveSelected.confidence * 100)}%` : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Tip</span>
+                  <span className="text-neutral-200">{archiveSelected.type}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Önem</span>
+                  <span className="text-neutral-200">{archiveSelected.severity ?? '—'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Konum</span>
+                  <span className="text-neutral-200">
+                    {archiveSelected.lat?.toFixed(4)}, {archiveSelected.lon?.toFixed(4)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">İncelenme</span>
+                  <span className="text-neutral-200">
+                    {archiveSelected.reviewed_at ? new Date(archiveSelected.reviewed_at).toLocaleString() : '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex-1 flex items-center justify-center text-neutral-500">Yükleniyor…</div>
         ) : !current ? (
           <div className="flex-1 flex items-center justify-center text-neutral-500 text-lg">

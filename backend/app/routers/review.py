@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session as DbSession
 
-from ..db import get_db
+from ..deps import get_tenant_db
 from ..models import Detection, Frame, InventoryItem, TrainingFeedback
 from ..schemas import ReviewDecision, ReviewQueueItem
 
@@ -19,7 +19,7 @@ _ALLOWED = {"approved", "rejected", "corrected"}
 
 
 @router.get("/queue", response_model=list[ReviewQueueItem])
-def review_queue(limit: int = 50, db: DbSession = Depends(get_db)) -> list[ReviewQueueItem]:
+def review_queue(limit: int = 50, db: DbSession = Depends(get_tenant_db)) -> list[ReviewQueueItem]:
     stmt = (
         select(
             InventoryItem,
@@ -55,7 +55,9 @@ def review_queue(limit: int = 50, db: DbSession = Depends(get_db)) -> list[Revie
 
 
 @router.post("/{item_id}")
-def submit_decision(item_id: UUID, body: ReviewDecision, db: DbSession = Depends(get_db)) -> dict:
+def submit_decision(
+    item_id: UUID, body: ReviewDecision, db: DbSession = Depends(get_tenant_db)
+) -> dict:
     if body.decision not in _ALLOWED:
         raise HTTPException(status_code=422, detail=f"decision must be one of {_ALLOWED}")
     inv = db.get(InventoryItem, item_id)
@@ -80,6 +82,7 @@ def submit_decision(item_id: UUID, body: ReviewDecision, db: DbSession = Depends
             image_ref = frame.image_ref if frame else None
         db.add(
             TrainingFeedback(
+                org_id=inv.org_id,
                 inventory_item_id=inv.id,
                 detection_id=inv.detection_id,
                 original_class=original_class,
